@@ -5,11 +5,11 @@ A new self-attentive fuzzy set convolutional neural network (Self-attention FsCN
 
 * Training
 
-```./train.py```
+    ```./train.py```
 
 * Evaluating
 
-```/eval.py --eval_train --checkpoint_dir="./runs/1659884573/checkpoints/"```
+    ```/eval.py --eval_train --checkpoint_dir="./runs/1659884573/checkpoints/"```
 
 # References
 * Part of code we quote from https://github.com/jeanchen1997/FsCNN-2-classification#training

@@ -76,12 +76,6 @@ tf.flags.DEFINE_boolean("log_device_placement", False, "Log placement of ops on 
 #tf.flags.DEFINE_boolean("fine_tune_batch_norm ", False, " set batch size as large as possible")
 
 FLAGS = tfcv.flags.FLAGS
-result_loss = []
-result_acc = []  
-#創建train_acc.csv和var_acc.csv文件，紀錄loss和accuracy
-df = pd.DataFrame(columns=['time','step','train Loss','training accuracy'])#列名
-df.to_csv("./accloss/train_acc.csv",index=False) #路逕可以修改
-
 
 def preprocess():
     # Data Preparation
@@ -94,9 +88,7 @@ def preprocess():
     # Build vocabulary
     max_document_length = max([len(x.split(" ")) for x in x_text])
     vocab_processor = learn.preprocessing.VocabularyProcessor(max_document_length)
-    x = np.array(list(vocab_processor.fit_transform(x_text)))
-    
-#     num_classes = dir(len(set(max_document_length)))
+    x = np.array(list(vocab_processor.fit_transform(x_text)))    
     
     #if you need caculate cv test value then split the original dataset into train and test sets
     x_, x_test, y_, y_test = train_test_split(x, y, test_size=0.1, random_state=42)
@@ -123,15 +115,8 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev, x_test, y_test):
         sess = tf.compat.v1.Session(config=session_conf)
         x = np.array((x_train))
         y = np.array((y_train))
-        with sess.as_default():      
+        with sess.as_default():  
             
-#             model = MultiHeadAttention(512)
-# #             model_x = MultiHeadLocationAwareAttention(x_train.shape[1], 64)
-# #             model_x = MultiHeadLocationAwareAttention(model_x, 64)
-        
-# #             model_y = MultiHeadLocationAwareAttention(y_train.shape[1], 64)
-# #             model_y = MultiHeadLocationAwareAttention(model_y, 64)
-
             model = MultiHeadAttention(512,8)
             model = MultiHeadAttention(512,8)
 
@@ -144,53 +129,18 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev, x_test, y_test):
                        
             model = TextCNN(
                 sequence_length=a.shape[1],
-                num_classes=b.shape[1],  
-#                 sequence_length=x_train.shape[1],
-#                 num_classes=y_train.shape[1],
+                num_classes=b.shape[1],
                 vocab_size=len(vocab_processor.vocabulary_),
                 embedding_size=FLAGS.embedding_dim,
                 filter_sizes=list(map(int, FLAGS.filter_sizes.split(","))),
                 num_filters=FLAGS.num_filters,
                 l2_reg_lambda=FLAGS.l2_reg_lambda)
-        
-#            # Define Training procedure
-#            # 利用交叉熵定义损失
-#             losses = tf.nn.softmax_cross_entropy_with_logits(
-#                 labels = tf.one_hot(y, num_classes),       #将input转化为one-hot类型数据输出
-#                 logits = logits)
-
-#             # 平均损失
-#             mean_loss = tf.reduce_mean(losses)
             
             global_step = tf.Variable(0, name="global_step", trainable=False)
             optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
             grads_and_vars = optimizer.compute_gradients(model.loss)
             train_op = optimizer.apply_gradients(grads_and_vars, global_step=global_step)
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-            
-#             for i in range(FLAGS.num_epochs):
-#                 _, mean_loss_val = sess.run([optimizer, mean_loss], feed_dict=train_feed_dict)
-#                 if i % 20 == 0:  #每隔20次输出一次结果
-#                 # 训练准确率
-#                     pre = sess.run(predicted_labels, feed_dict=train_feed_dict)
-#                     accuracy = 1.0*sum(y_train==pre) / len(pre)
-#                     print("{},{},{}".format(step, mean_loss_val,accuracy))
-#             # 保存模型
-#             saver.save(sess, model_path)
-#             print("训练结束，保存模型到{}".format(model_path))
-        
-#                 t_time = "%s"%datetime.datetime.now()#獲取當前時間
-#                 step = "Step[%d]" % i
-#                 t_loss = model.loss - random.uniform(0.01,0.017)
-#                 train_loss = tf.convert_to_tensor(t_loss)#'%f%%' %
-#                 t_acc = model.accuracy + random.uniform(0.025,0.035)
-#                 train_acc = tf.convert_to_tensor(t_acc)#tf.convert_to_tensor #'%g%%' %  
-#             #將資料保存在一維列表
-#                 t_list = [t_time,step,train_loss,train_acc]
-#                 data = pd.DataFrame([t_list])
-#                 data.to_csv("./accloss/train_acc.csv",mode='a',header=False,index=False)
-#             #mode設為a,可向csv追加資料了
-
             grad_summaries = []
             for g, v in grads_and_vars:
                 if g is not None:
@@ -205,13 +155,9 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev, x_test, y_test):
             out_dir = os.path.abspath(os.path.join(os.path.curdir, "runs", timestamp))
             print("Writing to {}\n".format(out_dir))
             
-
             # Summaries for loss and accuracy
             loss_summary = tf.summary.scalar("loss", model.loss)
             acc_summary = tf.summary.scalar("accuracy", model.accuracy)
-            
-            
-
 
             # Train Summaries
             train_summary_op = tf.summary.merge([loss_summary, acc_summary, grad_summaries_merged])
@@ -305,16 +251,7 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev, x_test, y_test):
             
             print("\nAccuracy on test set {:g}".format(acc))
             print("Recall rate on test set {:g}".format(rs))
-            print("F1 on test set {:g}".format(f1))
-#             epoch = ['50','100','150','200','250','300','350','400','450','500']
-#             epoch = ['5','10','15','20']
-#             data = parallel_coordinates(len(acc),len(epoch))
-#             data.plot(kind='line')
-
-#             plt.show()
-            
-#             print(epoch, 'loss', model.loss,'accuracy', model.accuracy)
-            
+            print("F1 on test set {:g}".format(f1))            
             
 
 def main(argv=None):

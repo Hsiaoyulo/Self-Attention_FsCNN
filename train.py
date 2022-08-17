@@ -136,11 +136,11 @@ def train(x_train, y_train, vocab_processor, x_dev, y_dev, x_test, y_test):
             model = MultiHeadAttention(512,8)
 
             #Horizontal Concatenation 沿著水平方向將數組堆疊起來
-            a = np.hstack((x,x_train)) 
-            b = np.hstack((y,y_train))   
+#             a = np.hstack((x,x_train)) 
+#             b = np.hstack((y,y_train))   
             #vertical concatenation 沿著垂直方向堆疊
-#             a = np.vstack((x,x_train))
-#             b = np.vstack((y,y_train))
+            a = np.vstack((x,x_train))
+            b = np.vstack((y,y_train))
                        
             model = TextCNN(
                 sequence_length=a.shape[1],
